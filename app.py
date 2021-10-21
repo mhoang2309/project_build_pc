@@ -1,8 +1,18 @@
 from flask import Flask, jsonify, request, make_response
 
 from src.blueprint_register import register_blueprint
+from flask_sqlalchemy import SQLAlchemy
+
+from models.user import *
+
+
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:admin@localhost:5432/buold_pc'
+
+db_build_pc = SQLAlchemy(app)
+
+
 register_blueprint(app)
 
 # @app.route('/login', methods=['GET'])
