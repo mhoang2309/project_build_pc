@@ -9,6 +9,8 @@ login_blueprint = Blueprint('uesr_blueprint',__name__)
 logout_bp = Blueprint('logout',__name__)
 SECRET_KEY = 'abc'
 
+
+# check token
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -29,8 +31,8 @@ class Login(MethodView):
         password = request.form['pass']
         print(username)
         print(password)
-        if username == 'hoang' and password == '123':
-            token = jwt.encode({'user': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=1000)},
+        if username == 'hoang' and password == '1234':
+            token = jwt.encode({'user': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=720)},
                             SECRET_KEY)
             return make_response('OK', 200, {'Token': token})
 
