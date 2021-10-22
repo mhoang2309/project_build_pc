@@ -1,16 +1,15 @@
 from flask import Flask, jsonify, request, make_response
 
 from src.blueprint_register import register_blueprint
-from flask_sqlalchemy import SQLAlchemy
-
-from models.user import *
+# from flask_sqlalchemy import SQLAlchemy
 
 
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:admin@localhost:5432/buold_pc'
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:admin@localhost:5432/porject_build_pc'
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
-db_build_pc = SQLAlchemy(app)
+# db_build_pc = SQLAlchemy(app)
 
 
 register_blueprint(app)

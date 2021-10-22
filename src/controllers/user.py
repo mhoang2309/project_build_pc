@@ -5,9 +5,29 @@ import jwt
 import datetime
 from functools import wraps
 
+# import random
+# import string
+# from passlib.hash import sha256_crypt
+from werkzeug.security import generate_password_hash, check_password_hash
+
+from src.models.user import User
+# from flask_sqlalchemy import SQLAlchemy
+
+# db_build_pc = SQLAlchemy()
+
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
+
+engine = create_engine('postgresql://postgres:admin@localhost:5432/porject_build_pc')
+Session = sessionmaker(bind=engine)
+db_build_pc = Session()
+
+
+# Bulueprint
 login_blueprint = Blueprint('uesr_blueprint',__name__)
 logout_bp = Blueprint('logout',__name__)
-SECRET_KEY = 'abc'
+register_bp = Blueprint('register', __name__)
+SECRET_KEY = 'XsPXqMwdor'
 
 
 # check token
@@ -22,19 +42,45 @@ def token_required(f):
         except:
             return jsonify({'message': 'Token is invalid!'}), 403
         return f(*args, **kwargs)
+
+        # data  = data = decoded = jwt.decode(token, options={"verify_signature": False}) 
+        # username = data['user']
+        # for i in db_build_pc.query(User).\
+        #         filter(User.username==username): 
+        #     if not token:
+        #         return jsonify({'message': 'Token is missing!'}), 403
+        #     try:
+        #         jwt.decode(token, i.key, algorithms=["HS256"])
+        #     except:
+        #         return jsonify({'message': 'Token is invalid!'}), 403
+        #     return f(*args, **kwargs)
     return decorated
 
+# def ramdum_key():
+#     # printing letters
+#     letters = string.ascii_letters
+#     return ''.join(random.choice(letters) for i in range(10))
 
 class Login(MethodView):
     def post(self):
-        username = request.form['user']
-        password = request.form['pass']
-        print(username)
-        print(password)
-        if username == 'hoang' and password == '1234':
-            token = jwt.encode({'user': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=720)},
-                            SECRET_KEY)
-            return make_response('OK', 200, {'Token': token})
+        username = request.json['user']
+        password = request.json['pass']
+
+        user_obj = db_build_pc.query(User).filter_by(username=username).first()
+        if user_obj:
+            for i in db_build_pc.query(User).\
+                filter(User.username==username):
+                print(i.password)
+                if check_password_hash(i.password, password):
+                    # new token "algorithms:HS256"
+                    token = jwt.encode({'user': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=720)},
+                    SECRET_KEY)
+                    # token = jwt.encode({'user': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=720)},
+                    #                 i.key)
+                    resp = make_response('OK', 200)
+                    resp.set_cookie("token",token)
+                    return resp
+                return make_response('user and password', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
 
         return make_response('Could not verify!', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
     
@@ -46,14 +92,26 @@ class Logout(MethodView):
 
 class Register(MethodView):
     def put(self):
-        return make_response('200', 200, {'user':'OK'})
+        username = request.json['user']
+        password = generate_password_hash(request.json['pass'], method='pbkdf2:sha256', salt_length=16)
+        # check username exists
+        user_obj = db_build_pc.query(User).filter_by(username=username).first()
+        if user_obj:
+            return make_response({'message':'Username exists'}, 401, {'user':'False'})
+        add_user = User(username=username, password=password)
+        db_build_pc.add(add_user)
+        db_build_pc.commit()
+        return make_response({'message':'Added user successfully'}, 200, {'user':'OK'})
 
 
 
-
+# methods Login API
 login_view = Login.as_view("login_api")
 login_blueprint.add_url_rule("",view_func=login_view, methods=["POST"])
-
+#  methods Logout API
 logout_view = Logout.as_view("logout_api")
 logout_bp.add_url_rule("", view_func=logout_view, methods=["GET"])
+# methods register API
+register_view = Register.as_view("register_api")
+register_bp.add_url_rule("", view_func=register_view, methods=["PUT"])
 
