@@ -1,4 +1,4 @@
-from flask import Blueprint, make_response, request, jsonify
+from flask import Blueprint, make_response, request
 from flask.views import MethodView
 
 import jwt
@@ -10,13 +10,15 @@ from functools import wraps
 # from passlib.hash import sha256_crypt
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from src.models.user import User
+from src.models.user import User, Token
 # from flask_sqlalchemy import SQLAlchemy
 
 # db_build_pc = SQLAlchemy()
 
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
+
+
 
 engine = create_engine('postgresql://postgres:admin@localhost:5432/porject_build_pc')
 Session = sessionmaker(bind=engine)
@@ -36,11 +38,19 @@ def token_required(f):
     def decorated(*args, **kwargs):
         token = request.headers.get('token')
         if not token:
-            return jsonify({'message': 'Token is missing!'}), 403
+            return make_response({'message': 'Token is missing!'}, 403)
         try:
             jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+            token_obj = db_build_pc.query(Token).filter_by(token=token).first()
+            
+            if token_obj:
+                db_build_pc.query(Token).filter_by(token=token).delete()
+                print("ok")
+
+            else:
+                return make_response('user not logout', 401)
         except:
-            return jsonify({'message': 'Token is invalid!'}), 403
+            return make_response({'message': 'Token is invalid!'}, 403)
         return f(*args, **kwargs)
 
         # data  = data = decoded = jwt.decode(token, options={"verify_signature": False}) 
@@ -70,13 +80,15 @@ class Login(MethodView):
         if user_obj:
             for i in db_build_pc.query(User).\
                 filter(User.username==username):
-                print(i.password)
                 if check_password_hash(i.password, password):
                     # new token "algorithms:HS256"
                     token = jwt.encode({'user': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=720)},
                     SECRET_KEY)
                     # token = jwt.encode({'user': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=720)},
                     #                 i.key)
+                    set_token = Token(username=username, token=token)
+                    db_build_pc.add(set_token)
+                    db_build_pc.commit()
                     resp = make_response('OK', 200)
                     resp.set_cookie("token",token)
                     return resp
@@ -86,7 +98,7 @@ class Login(MethodView):
     
 class Logout(MethodView):
     @token_required    
-    def get(self):
+    def get(self):         
         return make_response('OK Logout', 200, {'message':'Logout'})
 
 
