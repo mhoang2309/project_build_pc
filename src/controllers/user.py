@@ -41,14 +41,6 @@ def token_required(f):
             return make_response({'message': 'Token is missing!'}, 403)
         try:
             jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-            token_obj = db_build_pc.query(Token).filter_by(token=token).first()
-            
-            if token_obj:
-                db_build_pc.query(Token).filter_by(token=token).delete()
-                print("ok")
-
-            else:
-                return make_response('user not logout', 401)
         except:
             return make_response({'message': 'Token is invalid!'}, 403)
         return f(*args, **kwargs)
@@ -98,8 +90,18 @@ class Login(MethodView):
     
 class Logout(MethodView):
     @token_required    
-    def get(self):         
-        return make_response('OK Logout', 200, {'message':'Logout'})
+    def get(self):  
+        token = request.headers.get('token')  
+        token_obj = db_build_pc.query(Token).filter_by(token=token).first()
+        
+        if token_obj:
+            db_build_pc.query(Token).filter_by(token=token).delete()
+            resp = make_response({'message':'OK Logout'}, 200, {'message':'Logout'})
+            resp.delete_cookie('token')
+            return resp
+        else:
+            return make_response({'message':'user not logout'}, 401)     
+    
 
 
 class Register(MethodView):
