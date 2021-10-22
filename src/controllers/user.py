@@ -84,9 +84,9 @@ class Login(MethodView):
                     resp = make_response('OK', 200)
                     resp.set_cookie("token",token)
                     return resp
-                return make_response('user and password', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
+                return make_response({'message':'user and password'}, 401)
 
-        return make_response('Could not verify!', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
+        return make_response({'message':'Could not verify!'}, 401)
     
 class Logout(MethodView):
     @token_required    
