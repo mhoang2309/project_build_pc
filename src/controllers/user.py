@@ -3,7 +3,8 @@ from flask.views import MethodView
 
 import jwt
 import datetime
-from functools import wraps
+
+from src.controllers.check_token import token_required
 
 # import random
 # import string
@@ -29,39 +30,18 @@ db_build_pc = Session()
 login_blueprint = Blueprint('uesr_blueprint',__name__)
 logout_bp = Blueprint('logout',__name__)
 register_bp = Blueprint('register', __name__)
+
 SECRET_KEY = 'XsPXqMwdor'
 
 
-# check token
-def token_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        token = request.headers.get('token')
-        if not token:
-            return make_response({'message': 'Token is missing!'}, 403)
-        try:
-            jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-        except:
-            return make_response({'message': 'Token is invalid!'}, 403)
-        return f(*args, **kwargs)
-
-        # data  = data = decoded = jwt.decode(token, options={"verify_signature": False}) 
-        # username = data['user']
-        # for i in db_build_pc.query(User).\
-        #         filter(User.username==username): 
-        #     if not token:
-        #         return jsonify({'message': 'Token is missing!'}), 403
-        #     try:
-        #         jwt.decode(token, i.key, algorithms=["HS256"])
-        #     except:
-        #         return jsonify({'message': 'Token is invalid!'}), 403
-        #     return f(*args, **kwargs)
-    return decorated
 
 # def ramdum_key():
 #     # printing letters
 #     letters = string.ascii_letters
 #     return ''.join(random.choice(letters) for i in range(10))
+
+def clear_token():
+    pass
 
 class Login(MethodView):
     def post(self):
@@ -81,7 +61,7 @@ class Login(MethodView):
                     set_token = Token(username=username, token=token)
                     db_build_pc.add(set_token)
                     db_build_pc.commit()
-                    resp = make_response('OK', 200)
+                    resp = make_response({'message':'OK'}, 200)
                     resp.set_cookie("token",token)
                     return resp
                 return make_response({'message':'user and password'}, 401)
@@ -91,16 +71,10 @@ class Login(MethodView):
 class Logout(MethodView):
     @token_required    
     def get(self):  
-        token = request.headers.get('token')  
-        token_obj = db_build_pc.query(Token).filter_by(token=token).first()
-        
-        if token_obj:
-            db_build_pc.query(Token).filter_by(token=token).delete()
-            resp = make_response({'message':'OK Logout'}, 200, {'message':'Logout'})
-            resp.delete_cookie('token')
-            return resp
-        else:
-            return make_response({'message':'user not logout'}, 401)     
+        resp = make_response({'message':'OK Logout'}, 200, {'message':'Logout'})
+        resp.delete_cookie('token')
+        return resp
+   
     
 
 
