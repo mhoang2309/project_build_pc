@@ -12,6 +12,16 @@ db_build_pc = Session()
 
 SECRET_KEY = 'XsPXqMwdor'
 
+def delete_token(token):
+    db_build_pc.query(Token).filter_by(token=token).delete()
+    db_build_pc.commit()
+
+def is_admin(token):
+    data = jwt.decode(token, options={"verify_signature": False})
+    s = 'is_admin: ' + data['is_admin']
+    print(s)
+    
+
 # check token
 def token_required(f):
     @wraps(f)
@@ -22,9 +32,10 @@ def token_required(f):
             return make_response({'message': 'Token is missing!'}, 403)
         try:
             jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+            is_admin(token)
             token_obj = db_build_pc.query(Token).filter_by(token=token).first()
             if token_obj:
-                db_build_pc.query(Token).filter_by(token=token).delete()
+                delete_token(token)
             else:
                 return make_response({'message':'Token err'}, 401)
         except:
@@ -43,3 +54,4 @@ def token_required(f):
         #         return jsonify({'message': 'Token is invalid!'}), 403
         #     return f(*args, **kwargs)
     return decorated
+

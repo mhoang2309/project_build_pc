@@ -54,7 +54,7 @@ class Login(MethodView):
                 filter(User.username==username):
                 if check_password_hash(i.password, password):
                     # new token "algorithms:HS256"
-                    token = jwt.encode({'user': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=720)},
+                    token = jwt.encode({'user': username, 'is_admin': i.is_admin, 'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=720)},
                     SECRET_KEY)
                     # token = jwt.encode({'user': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=720)},
                     #                 i.key)
