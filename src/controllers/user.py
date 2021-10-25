@@ -1,5 +1,6 @@
 from flask import Blueprint, make_response, request
 from flask.views import MethodView
+from src.config.sqlalchemy import DatabaseConfig, TokenConfig, HashPasswordConfig
 
 import jwt
 import datetime
@@ -21,7 +22,7 @@ from sqlalchemy import create_engine
 
 
 
-engine = create_engine('postgresql://postgres:admin@localhost:5432/porject_build_pc')
+engine = create_engine(DatabaseConfig.SQLALCHEMY_DATABASE_URI)
 Session = sessionmaker(bind=engine)
 db_build_pc = Session()
 
@@ -31,7 +32,6 @@ login_blueprint = Blueprint('uesr_blueprint',__name__)
 logout_bp = Blueprint('logout',__name__)
 register_bp = Blueprint('register', __name__)
 
-SECRET_KEY = 'XsPXqMwdor'
 
 
 
@@ -54,8 +54,7 @@ class Login(MethodView):
                 filter(User.username==username):
                 if check_password_hash(i.password, password):
                     # new token "algorithms:HS256"
-                    token = jwt.encode({'user': username, 'is_admin': i.is_admin, 'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=720)},
-                    SECRET_KEY)
+                    token = jwt.encode({'user': username, 'is_admin': i.is_admin, 'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=720)}, TokenConfig.SECRET_KEY)
                     # token = jwt.encode({'user': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=720)},
                     #                 i.key)
                     set_token = Token(username=username, token=token)
@@ -81,7 +80,7 @@ class Logout(MethodView):
 class Register(MethodView):
     def put(self):
         username = request.json['user']
-        password = generate_password_hash(request.json['pass'], method='pbkdf2:sha256', salt_length=16)
+        password = generate_password_hash(request.json['pass'], method=HashPasswordConfig.METHOD, salt_length=HashPasswordConfig.SALT_LENGTH)
         # check username exists
         user_obj = db_build_pc.query(User).filter_by(username=username).first()
         if user_obj:

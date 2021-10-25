@@ -1,4 +1,5 @@
-from flask import Flask, jsonify, request, make_response
+from flask import Flask
+from src.config.sqlalchemy import DatabaseConfig
 
 from src.blueprint_register import register_blueprint
 # from flask_sqlalchemy import SQLAlchemy
@@ -6,11 +7,7 @@ from src.blueprint_register import register_blueprint
 
 
 app = Flask(__name__)
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:admin@localhost:5432/porject_build_pc'
-# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
-
-# db_build_pc = SQLAlchemy(app)
-
+app.config.from_object(DatabaseConfig())
 
 register_blueprint(app)
 
@@ -39,4 +36,4 @@ register_blueprint(app)
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(port=app.config['FLASK_RUN_PORT'])
