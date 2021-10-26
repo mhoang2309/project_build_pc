@@ -1,7 +1,8 @@
 # pip install -r requirements.txt
+# python 3.9.5
 
-PyJWT
-flask
-flask-sqlalchemy
-psycopg2-binary
-python-dotenv
+PyJWT == 2.3.0
+flask == 2.0.2
+flask-sqlalchemy == 2.5.1
+psycopg2-binary == 2.9.1
+python-dotenv = 0.19.1
