@@ -1,3 +1,4 @@
+from logging import debug
 from flask import Flask
 from src.config.sqlalchemy import DatabaseConfig
 from src.blueprint_register import register_blueprint
@@ -10,4 +11,5 @@ register_blueprint(app)
 
 
 if __name__ == '__main__':
+    print(app.config['DEBUG'])
     app.run(port=app.config['FLASK_RUN_PORT'])

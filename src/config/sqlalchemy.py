@@ -1,16 +1,20 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 class Config(object):
-    DEBUG = True
-    FLASK_RUN_PORT = 5000
+    DEBUG = eval(os.getenv('DEBUG_FLASK', default=False))
+    FLASK_RUN_PORT = os.getenv('FLASK_RUN_PORT', default=3000)
     
 class DatabaseConfig(Config):
 
-    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:admin@localhost:5432/porject_build_pc'
-    SQLALCHEMY_TRACK_MODIFICATIONS = True
+    SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
+    SQLALCHEMY_TRACK_MODIFICATIONS = eval(os.getenv('SQLALCHEMY_TRACK_MODIFICATIONS'))
 
 class TokenConfig(Config):
-    SECRET_KEY = 'XsPXqMwdor'
-    ALGORITHMS = 'HS256'
+    SECRET_KEY = os.getenv('SECRET_KEY')
+    ALGORITHMS = os.getenv('ALGORITHMS')
 
 class HashPasswordConfig(Config):
-    METHOD = 'pbkdf2:sha256'
-    SALT_LENGTH = 16
+    METHOD = os.getenv('METHOD')
+    SALT_LENGTH = os.getenv('SALT_LENGTH')
