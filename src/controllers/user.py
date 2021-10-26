@@ -1,44 +1,16 @@
 from flask import Blueprint, make_response, request
 from flask.views import MethodView
-from src.config.sqlalchemy import DatabaseConfig, TokenConfig, HashPasswordConfig
-
+from src.config.sqlalchemy import TokenConfig, HashPasswordConfig
 import jwt
 import datetime
-
-from src.controllers.check_token import token_required
-
-# import random
-# import string
-# from passlib.hash import sha256_crypt
+from src.controllers.check_token import token_required, delete_token
 from werkzeug.security import generate_password_hash, check_password_hash
-
 from src.models.user import User, Token
-# from flask_sqlalchemy import SQLAlchemy
-
-# db_build_pc = SQLAlchemy()
-
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
-
-
-
-engine = create_engine(DatabaseConfig.SQLALCHEMY_DATABASE_URI)
-Session = sessionmaker(bind=engine)
-db_build_pc = Session()
-
-
+from src.controllers.database import db_build_pc
 # Bulueprint
 login_blueprint = Blueprint('uesr_blueprint',__name__)
 logout_bp = Blueprint('logout',__name__)
 register_bp = Blueprint('register', __name__)
-
-
-
-
-# def ramdum_key():
-#     # printing letters
-#     letters = string.ascii_letters
-#     return ''.join(random.choice(letters) for i in range(10))
 
 def clear_token():
     pass
@@ -55,8 +27,6 @@ class Login(MethodView):
                 if check_password_hash(i.password, password):
                     # new token "algorithms:HS256"
                     token = jwt.encode({'user': username, 'is_admin': i.is_admin, 'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=720)}, TokenConfig.SECRET_KEY)
-                    # token = jwt.encode({'user': username, 'exp': datetime.datetime.utcnow() + datetime.timedelta(seconds=720)},
-                    #                 i.key)
                     set_token = Token(username=username, token=token)
                     db_build_pc.add(set_token)
                     db_build_pc.commit()
@@ -70,13 +40,11 @@ class Login(MethodView):
 class Logout(MethodView):
     @token_required    
     def get(self):  
+        delete_token(request.cookies.get('token'))
         resp = make_response({'message':'OK Logout'}, 200, {'message':'Logout'})
         resp.delete_cookie('token')
         return resp
-   
-    
-
-
+        
 class Register(MethodView):
     def put(self):
         username = request.json['user']
@@ -89,8 +57,6 @@ class Register(MethodView):
         db_build_pc.add(add_user)
         db_build_pc.commit()
         return make_response({'message':'Added user successfully'}, 200, {'user':'OK'})
-
-
 
 # methods Login API
 login_view = Login.as_view("login_api")
