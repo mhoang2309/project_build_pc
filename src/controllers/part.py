@@ -8,32 +8,21 @@ import json
 
 parts_bp = Blueprint('parts_bp',__name__)    
 
-class Parts(MethodView):
+class PartsAPI(MethodView):
     @token_required
     @is_admin
-    def get(self):       
-        data=[]
-        if request.args:
-            try:
-                name = request.args['name']
-            except:
-                 name = ''
-            try:
-                type = request.args['type']
-            except:
-                type = "%%"
-            part = db_build_pc.query(Part).filter( Part.name.like("%{}%".format(name)), Part.type.like(type)).all()
-            for i in part:
-                s ={"name":i.name, "type":i.type, "price":float(i.price)}
-                data.append(s)
+    def get(self):
+        query_params = request.args.to_dict()
+        name = query_params.get('name') or ''
+        type = query_params.get('type') or '%%'
 
-        else:
-            part = db_build_pc.query(Part).all()
-            for i in part:
-                s ={"name":i.name, "type":i.type, "price":float(i.price)}
-                data.append(s)
+        part_list = db_build_pc.query(Part).filter( Part.name.like("%{}%".format(name)), Part.type.like(type)).all()
+        result = []
+        for i in part_list:
+            s ={"name":i.name, "type":i.type, "price":float(i.price)}
+            result.append(s)
 
-        return json.dumps(data)
+        return make_response(json.dumps(result),200)
         
     
     
@@ -50,14 +39,21 @@ class Parts(MethodView):
 
    
     
-class Part_(MethodView):
+class PartAPI(MethodView):
+    def get(self, part_id):
+        try:
+            part = db_build_pc.query(Part).filter_by(id=part_id).first()
+            return make_response({"id":part.id, "name":part.name, "type":part.type, "price":float(part.price)},200)
+        except:
+            return make_response({'message':'id err'}, 401)
+
     @token_required
     @is_admin
     def put(self, part_id):
         name = request.json['name']
         type = request.json['type']
         price = request.json['price']
-        part = Part.query.get(part_id)
+        part = db_build_pc.query(Part).get(part_id)
         try:
             part.name = name
             part.type = type
@@ -76,11 +72,11 @@ class Part_(MethodView):
             return make_response({'message':'ok'}, 200)
         return make_response({'message':'Delete err'}, 404)
 
-parts_view = Parts.as_view("parts_api")
+parts_view = PartsAPI.as_view("parts_api")
 parts_bp.add_url_rule("",view_func=parts_view, methods=['GET', 'POST'])
 
-part_view = Part_.as_view("part_api")
-parts_bp.add_url_rule("/<int:part_id>",view_func=part_view, methods=['DELETE', 'PUT'])
+part_view = PartAPI.as_view("part_api")
+parts_bp.add_url_rule("/<int:part_id>",view_func=part_view, methods=['DELETE', 'PUT', 'GET'])
 
 
 
