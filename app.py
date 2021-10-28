@@ -11,5 +11,4 @@ register_blueprint(app)
 
 
 if __name__ == '__main__':
-    print(app.config['DEBUG'])
     app.run(port=app.config['FLASK_RUN_PORT'])
